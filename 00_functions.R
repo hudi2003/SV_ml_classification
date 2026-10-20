@@ -1,13 +1,3 @@
-#!/usr/bin/env Rscript
-# ================================================================
-# 脚本：00_functions.R
-# 功能：公共函数库，被 02_rigorous_nested_benchmark.R 和
-#       03_visualization.R 共同 source()。
-#       新增：概率级 Stacking 集成方法（候选池扩展 + glmnet正则化元学习器）。
-# 不要单独运行这个脚本，它只提供函数定义。
-# ================================================================
-
-# ---- 分层分折 ----
 stratified_folds <- function(y, k, seed = 42) {
   set.seed(seed)
   folds <- integer(length(y))
@@ -18,8 +8,6 @@ stratified_folds <- function(y, k, seed = 42) {
   }
   folds
 }
-
-# ---- FST：Weir & Cockerham (1984) ----
 compute_fst_wc <- function(geno_sub, breed_sub) {
   breeds <- levels(droplevels(breed_sub))
   r <- length(breeds)
@@ -56,8 +44,6 @@ compute_fst_wc <- function(geno_sub, breed_sub) {
   fst[is.na(fst) | is.infinite(fst)] <- 0
   pmax(fst, 0)
 }
-
-# ---- Delta / AED / PIC ----
 compute_delta_aed_pic <- function(geno_sub, breed_sub, chunk_size = 50000) {
   breeds <- levels(droplevels(breed_sub))
   B <- length(breeds)
@@ -87,8 +73,6 @@ compute_delta_aed_pic <- function(geno_sub, breed_sub, chunk_size = 50000) {
 
   list(Delta = delta, AED = aed, PIC = pic)
 }
-
-# ---- 单个分类器训练/预测封装（硬标签输出） ----
 fit_predict <- function(method, tr_x, tr_y, te_x) {
   switch(method,
     "RF" = {
@@ -155,19 +139,9 @@ fit_predict <- function(method, tr_x, tr_y, te_x) {
       pred_num <- apply(pred_mat, 1, which.max) - 1
       levels(tr_y)[pred_num + 1]
     },
-    stop("未知分类器: ", method)
+    stop("Unknown classifier: ", method)
   )
 }
-
-# ================================================================
-# ---- 概率级 Stacking 相关函数 ----
-# ================================================================
-
-# ---- 输出概率矩阵版本的基学习器封装：返回 n_test x n_class 矩阵，列名=品种 ----
-
-# ---- 概率级 Stacking：内层K折生成OOF概率 -> 拼接为元特征 -> glmnet正则化元学习器自动筛选权重 ----
-
-# ---- 给定一折训练集，重新算四个指标的排序，返回 named list ----
 rank_this_fold <- function(train_geno, train_breed, snp_names, add_rf_mda = FALSE) {
   fst_train <- compute_fst_wc(train_geno, train_breed)
   dap       <- compute_delta_aed_pic(train_geno, train_breed)

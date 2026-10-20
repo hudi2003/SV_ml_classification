@@ -1,8 +1,3 @@
-#!/usr/bin/env Rscript
-# ================================================================
-# 脚本：03_visualization.R（含 Stacking_proba 支持）
-# ================================================================
-
 library(data.table)
 library(ggplot2)
 library(tidyr)
@@ -28,9 +23,6 @@ classifier_colors <- c(
 res <- fread("nested_cv_full_summary.csv")
 x_breaks <- sort(unique(res$n_markers))
 
-# ================================================================
-# (0) Economical panel selection
-# ================================================================
 ACC_THRESHOLDS  <- c(0.90, 0.95, 0.99)
 PRIMARY_THRESHOLD <- 0.95
 
@@ -87,10 +79,6 @@ if (nrow(economical_tab) > 0) {
          width = 9, height = 3 + 1.5 * length(ACC_THRESHOLDS), dpi = 300)
   cat("Economical selection plot saved: fig_economical_selection.png/pdf\n")
 }
-
-# ================================================================
-# (1) Accuracy curves
-# ================================================================
 plot_accuracy_curve <- function(metric_name) {
   df <- res %>% filter(metric == metric_name)
 
@@ -125,9 +113,6 @@ plot_accuracy_curve <- function(metric_name) {
 for (m in unique(res$metric)) plot_accuracy_curve(m)
 cat("Accuracy curve figures saved (one per metric: fig_accuracy_*.png/pdf)\n")
 
-# ================================================================
-# (2) Runtime comparison
-# ================================================================
 p_time <- ggplot(res, aes(x = classifier, y = mean_time, fill = classifier)) +
   geom_boxplot(outlier.size = 0.6) +
   scale_fill_manual(values = classifier_colors) +
@@ -143,9 +128,6 @@ ggsave("fig_runtime_comparison.pdf", p_time, width = 8, height = 5)
 ggsave("fig_runtime_comparison.png", p_time, width = 8, height = 5, dpi = 300)
 cat("Runtime comparison figure saved: fig_runtime_comparison.png/pdf\n")
 
-# ================================================================
-# (3) Best-classifier heatmap
-# ================================================================
 best_tab <- res %>%
   group_by(metric, n_markers) %>%
   slice_max(mean_acc, n = 1, with_ties = FALSE) %>%
@@ -166,9 +148,6 @@ ggsave("fig_best_classifier_heatmap.pdf", p_heat, width = 10, height = 4)
 ggsave("fig_best_classifier_heatmap.png", p_heat, width = 10, height = 4, dpi = 300)
 cat("Best-classifier heatmap saved: fig_best_classifier_heatmap.png/pdf\n")
 
-# ================================================================
-# (4) Confusion matrices for the economical combination
-# ================================================================
 geno_mat  <- readRDS("geno_mat.rds")
 breed_vec <- as.factor(readRDS("breed_vec.rds"))
 snp_names <- readRDS("snp_names.rds")
@@ -256,9 +235,6 @@ for (n in CONF_PANEL_SIZES) {
   cat(sprintf("Saved: fig_confusion_%dSNPs.pdf / .png\n", n))
 }
 
-# ================================================================
-# (5) Ranking stability check across folds
-# ================================================================
 cat(format(Sys.time(), "%H:%M:%S"), "Checking ranking stability across folds...\n")
 
 stability_check_n <- max(CONF_PANEL_SIZES)
