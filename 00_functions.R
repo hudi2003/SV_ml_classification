@@ -73,14 +73,41 @@ compute_delta_aed_pic <- function(geno_sub, breed_sub, chunk_size = 50000) {
 
   list(Delta = delta, AED = aed, PIC = pic)
 }
-fit_predict <- function(method, tr_x, tr_y, te_x) {
+"%||%" <- function(a, b) if (is.null(a)) b else a
+
+# Hyper-parameter grid used by the inner cross-validation.
+# RF   : ntree x mtry            (mtry spans sqrt(p), p/5 and p/2)
+# SVM  : cost in {0.01, 0.1, 1, 10}
+# Other classifiers keep their pre-specified settings (grid = NULL).
+hyper_grid <- function(method, p) {
   switch(method,
     "RF" = {
-      fit <- randomForest::randomForest(x = tr_x, y = tr_y, ntree = 500)
+      ntrees <- c(300L, 500L, 1000L)
+      mtries <- unique(as.integer(pmax(1L, pmin(p, c(floor(sqrt(p)),
+                                                      floor(p / 5),
+                                                      floor(p / 2))))))
+      expand.grid(ntree = ntrees, mtry = mtries,
+                  KEEP.OUT.ATTRS = FALSE, stringsAsFactors = FALSE)
+    },
+    "SVM_linear" = data.frame(cost = c(0.01, 0.1, 1, 10),
+                              stringsAsFactors = FALSE),
+    NULL
+  )
+}
+
+fit_predict <- function(method, tr_x, tr_y, te_x, params = list()) {
+  switch(method,
+    "RF" = {
+      ntree <- params$ntree %||% 500L
+      mtry  <- params$mtry  %||% max(1L, floor(sqrt(ncol(tr_x))))
+      fit <- randomForest::randomForest(x = tr_x, y = tr_y,
+                                        ntree = ntree, mtry = mtry)
       as.character(predict(fit, te_x))
     },
     "SVM_linear" = {
-      fit <- e1071::svm(tr_x, tr_y, kernel = "linear", scale = FALSE)
+      cost <- params$cost %||% 1
+      fit <- e1071::svm(tr_x, tr_y, kernel = "linear", cost = cost,
+                        scale = FALSE)
       as.character(predict(fit, te_x))
     },
     "SVM_RBF" = {
@@ -96,7 +123,8 @@ fit_predict <- function(method, tr_x, tr_y, te_x) {
       as.character(predict(fit, te_x)$class)
     },
     "KNN" = {
-      as.character(class::knn(tr_x, te_x, tr_y, k = 5))
+      k <- params$k %||% 5L
+      as.character(class::knn(tr_x, te_x, tr_y, k = k))
     },
     "DecisionTree" = {
       tr_df <- data.frame(y = tr_y, tr_x, check.names = FALSE)
@@ -108,9 +136,11 @@ fit_predict <- function(method, tr_x, tr_y, te_x) {
       y_tr_num <- as.integer(tr_y) - 1
       dtr <- xgboost::xgb.DMatrix(data = tr_x, label = y_tr_num)
       dte <- xgboost::xgb.DMatrix(data = te_x)
-      fit <- xgboost::xgb.train(data = dtr, nrounds = 100, max_depth = 6, eta = 0.3,
-                                 objective = "multi:softmax",
-                                 num_class = nlevels(tr_y), verbose = 0)
+      fit <- xgboost::xgb.train(params = list(objective = "multi:softmax",
+                                               num_class = nlevels(tr_y),
+                                               max_depth = 6, eta = 0.3,
+                                               nthread = 1),
+                                 data = dtr, nrounds = 100, verbose = 0)
       pred_num <- predict(fit, dte)
       levels(tr_y)[pred_num + 1]
     },
@@ -122,8 +152,13 @@ fit_predict <- function(method, tr_x, tr_y, te_x) {
       levels(tr_y)[apply(pred_mat, 1, which.max)]
     },
     "Lasso" = {
+      # Stratified internal folds keep every breed represented in each fold;
+      # the number of folds is capped by the rarest breed in the training set.
+      k_lasso <- max(3L, min(5L, min(table(tr_y))))
+      foldid  <- stratified_folds(tr_y, k_lasso, seed = 1234L)
       cv_fit <- glmnet::cv.glmnet(x = tr_x, y = tr_y, family = "multinomial",
-                                  type.measure = "class", nfolds = 5, alpha = 1)
+                                  type.measure = "class", nfolds = k_lasso,
+                                  foldid = foldid, alpha = 1)
       pred <- predict(cv_fit, newx = te_x, s = "lambda.min", type = "class")
       as.character(pred)
     },
@@ -142,6 +177,89 @@ fit_predict <- function(method, tr_x, tr_y, te_x) {
     stop("Unknown classifier: ", method)
   )
 }
+
+# Build the inner (tuning) splits of one outer training fold.
+# Rankings are recomputed inside every inner training split, so neither the
+# outer test fold nor the inner validation samples contribute to the ranking
+# used to fit/tune the classifier.
+make_inner_setup <- function(train_geno, train_breed, k = 3, seed = 42,
+                             snp_names = colnames(train_geno)) {
+  inner_folds <- stratified_folds(train_breed, k, seed = seed)
+  ids <- lapply(seq_len(k), function(f) which(inner_folds == f))
+  rankings <- lapply(seq_len(k), function(f) {
+    itr <- which(inner_folds != f)
+    rank_this_fold(train_geno[itr, , drop = FALSE],
+                   droplevels(train_breed[itr]), snp_names)
+  })
+  list(folds = inner_folds, ids = ids, rankings = rankings, k = k)
+}
+
+# Grid search on the inner folds only.  The outer test fold is never passed to
+# this function.
+inner_cv_select <- function(method, grid, setup, metric, n,
+                            train_geno, train_breed, seed = 1L) {
+  K <- setup$k
+  acc_mat <- matrix(NA_real_, nrow = nrow(grid), ncol = K)
+  for (g in seq_len(nrow(grid))) {
+    params <- as.list(grid[g, , drop = FALSE])
+    for (f in seq_len(K)) {
+      va <- setup$ids[[f]]
+      tr <- setdiff(seq_along(train_breed), va)
+      snps <- head(setup$rankings[[f]][[metric]], n)
+      tr_x <- train_geno[tr, snps, drop = FALSE]
+      va_x <- train_geno[va, snps, drop = FALSE]
+      set.seed(seed + 1000L * g + f)
+      pred <- tryCatch(
+        fit_predict(method, tr_x, train_breed[tr], va_x, params),
+        error = function(e) rep(NA_character_, length(va))
+      )
+      acc_mat[g, f] <- mean(pred == as.character(train_breed[va]), na.rm = TRUE)
+    }
+  }
+  mean_acc <- rowMeans(acc_mat, na.rm = TRUE)
+  if (all(is.na(mean_acc))) {
+    return(list(params = as.list(grid[1, , drop = FALSE]),
+                inner_acc = NA_real_, inner_sd = NA_real_,
+                inner_acc_mat = acc_mat))
+  }
+  best <- which.max(mean_acc)          # ties -> first (smallest) configuration
+  list(params = as.list(grid[best, , drop = FALSE]),
+       inner_acc = mean_acc[best],
+       inner_sd = if (K > 1) stats::sd(acc_mat[best, ], na.rm = TRUE) else NA_real_,
+       inner_acc_mat = acc_mat)
+}
+
+# Full nested prediction for one (metric, panel size, classifier) cell:
+# tune on the inner folds of the outer training set, refit on the whole outer
+# training set, then predict the untouched outer test set.
+nested_fit_predict <- function(method, metric, n, train_geno, train_breed,
+                               test_geno, outer_ranking, setup, seed = 1L) {
+  snps <- head(outer_ranking[[metric]], n)
+  grid <- hyper_grid(method, length(snps))
+
+  if (is.null(grid)) {
+    sel <- list(params = list(), inner_acc = NA_real_, inner_sd = NA_real_)
+  } else {
+    sel <- inner_cv_select(method, grid, setup, metric, n,
+                           train_geno, train_breed, seed = seed)
+  }
+
+  set.seed(seed + 7L)
+  pred <- fit_predict(method,
+                      train_geno[, snps, drop = FALSE], train_breed,
+                      test_geno[, snps, drop = FALSE], sel$params)
+
+  list(pred = pred, params = sel$params,
+       inner_acc = sel$inner_acc, inner_sd = sel$inner_sd,
+       searched = !is.null(grid),
+       grid_size = if (is.null(grid)) 0L else nrow(grid))
+}
+
+params_to_string <- function(params) {
+  if (length(params) == 0) return("fixed")
+  paste(names(params), unlist(params), sep = "=", collapse = ";")
+}
+
 rank_this_fold <- function(train_geno, train_breed, snp_names, add_rf_mda = FALSE) {
   fst_train <- compute_fst_wc(train_geno, train_breed)
   dap       <- compute_delta_aed_pic(train_geno, train_breed)

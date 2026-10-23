@@ -11,3 +11,4 @@
 *.npy
 .RData
 .Rhistory
+viz_local/

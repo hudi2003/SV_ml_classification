@@ -168,27 +168,37 @@ folds <- stratified_folds(breed_vec, n_folds_conf)
 
 plot_list <- list()
 
+# Pre-compute the outer ranking and the inner tuning setup once per outer fold.
+conf_cache <- lapply(1:n_folds_conf, function(k) {
+  train_idx <- which(folds != k)
+  train_geno  <- geno_mat[train_idx, , drop = FALSE]
+  train_breed <- droplevels(breed_vec[train_idx])
+  list(train_geno  = train_geno,
+       train_breed = train_breed,
+       test_geno   = geno_mat[which(folds == k), , drop = FALSE],
+       test_breed  = breed_vec[which(folds == k)],
+       ranking     = rank_this_fold(train_geno, train_breed, snp_names),
+       inner       = make_inner_setup(train_geno, train_breed, k = 5,
+                                        seed = 2024L + k, snp_names = snp_names))
+})
+
 for (n in CONF_PANEL_SIZES) {
   cat(sprintf("\n=== Panel size: %d ===\n", n))
 
   all_true <- c(); all_pred <- c()
   for (k in 1:n_folds_conf) {
-    train_idx <- which(folds != k)
-    test_idx  <- which(folds == k)
+    cc <- conf_cache[[k]]
+    train_geno  <- cc$train_geno
+    train_breed <- cc$train_breed
+    test_geno   <- cc$test_geno
+    test_breed  <- cc$test_breed
 
-    train_geno  <- geno_mat[train_idx, , drop = FALSE]
-    train_breed <- droplevels(breed_vec[train_idx])
-    test_geno   <- geno_mat[test_idx, , drop = FALSE]
-    test_breed  <- breed_vec[test_idx]
-
-    ranking_this_fold <- rank_this_fold(train_geno, train_breed, snp_names)
-    ranked_snps <- ranking_this_fold[[CONF_METRIC]]
-    top_snps <- head(ranked_snps, n)
-
-    tr_x <- train_geno[, top_snps, drop = FALSE]
-    te_x <- test_geno[,  top_snps, drop = FALSE]
-
-    pred <- fit_predict(CONF_CLASSIFIER, tr_x, train_breed, te_x)
+    fit <- nested_fit_predict(CONF_CLASSIFIER, CONF_METRIC, n,
+                              train_geno, train_breed, test_geno,
+                              cc$ranking, cc$inner, seed = 42L + 10000L * k + 10L * n)
+    pred <- fit$pred
+    cat(sprintf("  fold %d: %s (inner acc %.3f)\n",
+                k, params_to_string(fit$params), fit$inner_acc))
 
     all_true <- c(all_true, as.character(test_breed))
     all_pred <- c(all_pred, as.character(pred))
