@@ -33,22 +33,22 @@ conf_df$txt_color <- ifelse(conf_df$Proportion > 0.5, "white", "gray20")
 
 p <- ggplot(conf_df, aes(x = Pred, y = True, fill = Proportion)) +
   geom_tile(color = "white", linewidth = 0.3) +
-  geom_text(aes(label = label, color = txt_color), size = 2.6, show.legend = FALSE) +
+  geom_text(aes(label = label, color = txt_color), size = 3.0, show.legend = FALSE) +
   scale_color_identity() +
   scale_fill_gradient2(low = "white", mid = "#85B7EB", high = "#0C447C",
                        midpoint = 0.5, limits = c(0, 1), name = "Proportion") +
   labs(x = "Predicted breed", y = "True breed",
        title = sprintf("%d markers (%s + %s)", N, CONF_METRIC, CONF_CLASSIFIER),
        subtitle = sprintf("Accuracy: %.1f%%", acc * 100)) +
-  theme_classic(base_size = 20) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 14),
-        axis.text.y = element_text(size = 14),
-        plot.title = element_text(size = 18, face = "bold"),
-        plot.subtitle = element_text(size = 14),
+  theme_classic(base_size = 23) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
+        axis.text.y = element_text(size = 16),
+        plot.title = element_text(size = 21, face = "bold"),
+        plot.subtitle = element_text(size = 17),
         legend.key.size = unit(1, "cm"),
-        legend.title = element_text(size = 16),
-        legend.text = element_text(size = 10))
+        legend.title = element_text(size = 18),
+        legend.text = element_text(size = 12))
 
-ggsave("Figure4b_confusion_600SV_FST_SVM.pdf", p, width = 9, height = 8)
+ggsave("Figure4b_confusion_600SV_FST_SVM.pdf", p, width = 9, height = 8, device = cairo_pdf)
 ggsave("Figure4b_confusion_600SV_FST_SVM.png", p, width = 9, height = 8, dpi = 300)
 cat("saved Figure4b (FST 600, SVM_linear)\n")
