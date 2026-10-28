@@ -10,7 +10,7 @@ Code accompanying the manuscript *"Population-scale structural variants as genet
 
 This repository contains the R code used to evaluate structural variants (SVs) as breed-informative markers in 339 domestic ducks from 22 populations. Four ranking statistics are compared — FST, Delta, the average Euclidean distance (AED) and the polymorphism information content (PIC) — across ten classifiers and 20 panel sizes under a nested cross-validation design.
 
-**Headline result.** With a linear-kernel SVM, a panel of 600 FST-ranked SVs assigned breeds with 95.6% accuracy (95.0% for AED-, 94.1% for Delta- and 95.6% for PIC-ranked SVs); the 95% level was exceeded with 600 FST-, 600 AED-, 800 Delta- and 500 PIC-ranked markers. Panels of randomly selected SVs required 600 markers to reach 95.3% and were less accurate than ranked panels at panel sizes up to 200 markers.
+**Headline result.** With a linear-kernel SVM, a panel of 600 FST-ranked SVs assigned breeds with 95.3% accuracy (94.4% for AED-, 93.9% for Delta- and 95.3% for PIC-ranked SVs); the 95% level was exceeded with 600 FST-, 800 AED-, 800 Delta- and 600 PIC-ranked markers. Randomly selected panels of the same size reached 93.7 +/- 1.0% over 1,000 independent draws, so ranking buys a modest (0.2-1.6 percentage point) but reproducible gain rather than being the source of the accuracy; random panels required 1,200 markers to reach 95%.
 
 ---
 
@@ -26,6 +26,10 @@ This repository contains the R code used to evaluate structural variants (SVs) a
 | `05_summarize_results.py` | Extracts the numbers cited in the manuscript from the benchmark tables |
 | `export_marker_ranking.R` | Exports per-SV values of the four ranking statistics |
 | `fst_confusion_only.R` | Confusion matrix for the FST-ranked panel |
+| `06_random600_replicates.R` | Random-panel control: repeats the nested procedure with independently drawn panels (default 1,000 draws of 600 SVs) |
+| `06b_random600_compare.R` | Statistics and figure for the random-panel control |
+| `07_figureS5_random600.py` | Figure S5 (matplotlib): distribution of the random panels vs. the ranked panels |
+| `run_random600.sh` | SLURM-free launcher for the random-panel control (48 workers) |
 
 ---
 
@@ -59,6 +63,10 @@ Four statistics are computed for every SV and used to rank the markers:
 * **Marker ranking is recomputed inside every training fold and inside every inner training split**, so neither held-out nor inner-validation samples influence marker selection or the hyper-parameter choice
 * **Panel sizes** — 10, 20, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1,000, 1,200, 1,400, 1,600, 1,800, 2,000, 2,500, 3,000
 
+### Random-panel control
+
+The control for the ranking step uses exactly the same nested design: the panel of 600 SVs is re-drawn at random inside every outer training fold and again inside every inner training split, and the whole procedure is repeated for every draw (1,000 draws by default, fixed seeds). Accuracy across draws is summarised as mean +/- SD and compared with the four ranked panels of the same size; paired comparisons use the five shared outer folds.
+
 ### Classifiers
 
 Random forest (ntree and mtry tuned in the inner loop), linear SVM (cost tuned in the inner loop), RBF SVM, naive Bayes, LDA, k-nearest neighbours (k = 5), decision tree, XGBoost (`nrounds` = 100, `max_depth` = 6, `eta` = 0.3), multilayer perceptron (`size` = 10, `decay` = 5e-4, `maxit` = 300), and lasso-penalised multinomial logistic regression.
@@ -76,6 +84,10 @@ Rscript 02_rigorous_nested_benchmark.R
 
 # 3. Produce the figures
 Rscript 03_visualization.R
+
+# 4. Random-panel control (1,000 draws; 48 workers, ~20 min)
+RAND_REP=1000 NESTED_CORES=48 Rscript 06_random600_replicates.R
+Rscript 06b_random600_compare.R
 ```
 
 Tested with R 4.3.3. Required packages: `data.table`, `dplyr`, `randomForest`, `e1071`, `MASS`, `class`, `rpart`, `xgboost`, `nnet`, `glmnet`, `foreach`, `doParallel`.

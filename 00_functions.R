@@ -189,7 +189,8 @@ make_inner_setup <- function(train_geno, train_breed, k = 3, seed = 42,
   rankings <- lapply(seq_len(k), function(f) {
     itr <- which(inner_folds != f)
     rank_this_fold(train_geno[itr, , drop = FALSE],
-                   droplevels(train_breed[itr]), snp_names)
+                   droplevels(train_breed[itr]), snp_names,
+                   rng_seed = seed + f)
   })
   list(folds = inner_folds, ids = ids, rankings = rankings, k = k)
 }
@@ -260,15 +261,18 @@ params_to_string <- function(params) {
   paste(names(params), unlist(params), sep = "=", collapse = ";")
 }
 
-rank_this_fold <- function(train_geno, train_breed, snp_names, add_rf_mda = FALSE) {
+rank_this_fold <- function(train_geno, train_breed, snp_names, add_rf_mda = FALSE,
+                           rng_seed = NULL) {
   fst_train <- compute_fst_wc(train_geno, train_breed)
   dap       <- compute_delta_aed_pic(train_geno, train_breed)
 
+  if (!is.null(rng_seed)) set.seed(rng_seed)
   out <- list(
-    FST   = snp_names[order(-fst_train)],
-    Delta = snp_names[order(-dap$Delta)],
-    AED   = snp_names[order(-dap$AED)],
-    PIC   = snp_names[order(-dap$PIC)]
+    FST    = snp_names[order(-fst_train)],
+    Delta  = snp_names[order(-dap$Delta)],
+    AED    = snp_names[order(-dap$AED)],
+    PIC    = snp_names[order(-dap$PIC)],
+    Random = snp_names[sample.int(length(snp_names))]
   )
 
   if (add_rf_mda) {

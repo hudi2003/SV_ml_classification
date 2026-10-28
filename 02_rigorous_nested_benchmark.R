@@ -37,6 +37,15 @@ cat(format(Sys.time(), "%H:%M:%S"), "Loading data...\n")
 geno_mat  <- readRDS("geno_mat.rds")
 breed_vec <- as.factor(readRDS("breed_vec.rds"))
 snp_names <- readRDS("snp_names.rds")
+
+# Exclude break-end (BND) SVs from the ranking/classification panels, in line
+# with the manuscript (BNDs are retained in the callset but excluded from
+# population analyses). BND IDs carry a bracketed ALT.
+bnd_idx <- grepl("\\[|\\]", snp_names)
+if (any(bnd_idx)) {
+  geno_mat  <- geno_mat[, !bnd_idx, drop = FALSE]
+  snp_names <- snp_names[!bnd_idx]
+}
 cat(sprintf("Samples: %d | sites: %d | breeds: %d\n",
             nrow(geno_mat), ncol(geno_mat), nlevels(breed_vec)))
 
@@ -46,7 +55,7 @@ panel_sizes <- if (QUICK_TEST) c(20, 100) else panel_sizes_full
 
 classifier_list <- c("RF", "SVM_linear", "SVM_RBF", "NB", "LDA",
                       "KNN", "DecisionTree", "XGBoost", "MLP", "Lasso")
-metric_list <- c("FST", "Delta", "AED", "PIC")
+metric_list <- c("FST", "Delta", "AED", "PIC", "Random")
 
 n_folds <- if (QUICK_TEST) 2L else 5L
 
@@ -75,7 +84,8 @@ for (k in 1:n_folds) {
   test_geno   <- geno_mat[test_idx, , drop = FALSE]
   test_breed  <- breed_vec[test_idx]
 
-  ranking_this_fold <- rank_this_fold(train_geno, train_breed, snp_names)
+  ranking_this_fold <- rank_this_fold(train_geno, train_breed, snp_names,
+                                      rng_seed = 100000L + k)
 
   cat(format(Sys.time(), "%H:%M:%S"),
       sprintf("Building %d inner folds and inner rankings...\n", INNER_K))
