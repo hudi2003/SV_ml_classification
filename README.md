@@ -10,7 +10,7 @@ Code accompanying the manuscript *"Population-scale structural variants as genet
 
 This repository contains the R code used to evaluate structural variants (SVs) as breed-informative markers in 339 domestic ducks from 22 populations. Four ranking statistics are compared — FST, Delta, the average Euclidean distance (AED) and the polymorphism information content (PIC) — across ten classifiers and 20 panel sizes under a nested cross-validation design.
 
-**Headline result.** With a linear-kernel SVM, a panel of 600 FST-ranked SVs assigned breeds with 95.3% accuracy (94.4% for AED-, 93.9% for Delta- and 95.3% for PIC-ranked SVs); the 95% level was exceeded with 600 FST-, 800 AED-, 800 Delta- and 600 PIC-ranked markers. Randomly selected panels of the same size reached 93.7 +/- 1.0% over 1,000 independent draws, so ranking buys a modest (0.2-1.6 percentage point) but reproducible gain rather than being the source of the accuracy; random panels required 1,200 markers to reach 95%.
+**Headline result.** With a linear-kernel SVM, a panel of 600 FST-ranked SVs assigned breeds with 95.3% accuracy (94.4% for AED-, 93.8% for Delta- and 95.3% for PIC-ranked SVs); the 95% level was exceeded with 600 FST-, 800 AED-, 800 Delta- and 600 PIC-ranked markers. Randomly selected panels of the same size reached 93.7 +/- 1.0% over 1,000 independent draws, so ranking buys a modest (0.2-1.6 percentage point) but reproducible gain rather than being the source of the accuracy; random panels required 1,200 markers to reach 95%.
 
 ---
 
