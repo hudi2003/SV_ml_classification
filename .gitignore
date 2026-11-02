@@ -1,14 +1,1 @@
-*.rds
-*.raw
-*.bed
-*.bim
-*.fam
-*.csv
-*.pdf
-*.png
-*.out
-*.log
-*.npy
-.RData
-.Rhistory
-viz_local/
+__pycache__/
