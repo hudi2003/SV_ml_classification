@@ -1,0 +1,10 @@
+Random 600-SV panels: 1000 draws, nested 5x5, SVM linear
+  draw mean: 93.69% +/- 1.04%  (range 89.39-97.09%, 2.5-97.5%: 91.71-95.81%)
+
+Ranking method vs random null:
+  AED   ranked 94.44% (SD 2.05) | random 93.69% | diff +0.75 pp | draws >= ranked 201/1000 (p=0.20) | paired t p=0.196
+  Delta ranked 93.85% (SD 1.73) | random 93.69% | diff +0.15 pp | draws >= ranked 437/1000 (p=0.44) | paired t p=0.873
+  FST   ranked 95.29% (SD 1.86) | random 93.69% | diff +1.59 pp | draws >= ranked 61/1000 (p=0.06) | paired t p=0.053
+  PIC   ranked 95.31% (SD 1.82) | random 93.69% | diff +1.61 pp | draws >= ranked 55/1000 (p=0.06) | paired t p=0.024
+
+Overlap of a random 600-SV panel with the FST top-600 panel of the same outer training fold: 41.3 +/- 6.0 SVs (6.9%), chance expectation 41.2 (6.9%); max 63

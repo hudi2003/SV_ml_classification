@@ -1,7 +1,8 @@
 library(data.table); library(ggplot2); library(scales)
 
 res <- fread("nested_cv_full_summary.csv")
-x_breaks <- sort(unique(res$n_markers))
+# Only label a few key panel sizes on the log axis (all 20 points are still plotted)
+x_breaks <- c(10, 50, 200, 600, 1000, 3000)
 classifier_colors <- c(
   RF = "#3B8BD4", SVM_linear = "#D85A30", SVM_RBF = "#E8A33D", NB = "#1D9E75",
   LDA = "#7F77DD", KNN = "#C25CA8", DecisionTree = "#8C6D3F", XGBoost = "#2C2C54",
@@ -18,7 +19,7 @@ p <- ggplot(df, aes(x = n_markers, y = mean_acc, color = classifier, fill = clas
   scale_x_log10(breaks = x_breaks, labels = x_breaks) +
   scale_y_continuous(limits = c(0, 1.05), labels = scales::percent_format(accuracy = 1)) +
   scale_color_manual(values = classifier_colors) + scale_fill_manual(values = classifier_colors) +
-  labs(title = "Classifier accuracy under FST ranking", x = "Number of markers (log scale)",
+  labs(title = expression("Classifier accuracy under " * italic(F)[ST] * " ranking"), x = "Number of markers (log scale)",
        y = "Nested CV accuracy", color = "Classifier", fill = "Classifier") +
   theme_classic(base_size = 19) +
   theme(axis.text.x = element_text(angle = 55, hjust = 1, size = 11),

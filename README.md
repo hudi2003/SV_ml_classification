@@ -105,3 +105,28 @@ If you use this code, please cite:
 ## License
 
 Released for academic use. Please contact the corresponding author (Xia Wang, xiawang@nwafu.edu.cn) regarding reuse.
+
+## All-classifier tuning (2026-11)
+
+Hyper-parameters are now tuned by the inner cross-validation for all ten classifiers (grids in
+`00_functions.R`): linear SVM C; RBF SVM C x gamma; RF trees x mtry; k-NN k; naive Bayes Laplace
+smoothing; decision tree cp (minsplit = 5, no surrogate splits); XGBoost rounds x depth; MLP hidden
+units x weight decay. LDA has no hyper-parameters and the lasso penalty is chosen by `cv.glmnet`
+inside the training fold; the lasso branch also sweeps the elastic-net alpha from 0 to 1.
+
+At 600 FST-ranked markers the linear SVM remains the most accurate (95.3%), followed by the RBF SVM
+(94.7%) and the MLP (93.0%); LDA reaches 90.3%, k-NN 90.0%, the lasso 89.5%, the random forest 85.0%,
+XGBoost 76.8% and the decision tree 50.5%. SVM_linear, RF, LDA and NB reproduce the earlier
+fixed-setting run exactly, which also verifies reproducibility.
+
+Each of the 5,000 (fold x ranking statistic x panel size x classifier) cells is run as an independent
+single-core task:
+
+| File | Description |
+|---|---|
+| `02_single.R` | Runs one cell; writes `parts/row_XXXXX.csv` |
+| `make_tasks.py` | Builds `tasks.csv` (5,000 cells, most expensive first) |
+| `merge_parts.R` | Merges `parts/` into the `nested_cv_*_ALL.csv` tables |
+| `panel_selected_by_inner_cv.py` | Panel size chosen inside each training fold by the inner CV |
+| `nested_cv_summary_ALL.csv`, `nested_cv_detail_ALL.csv`, `nested_cv_params_ALL.csv` | Complete results |
+| `panel_selected_by_inner_cv.csv` | Selected panel size and held-out accuracy per classifier and statistic |

@@ -5,6 +5,9 @@ source("00_functions.R")
 geno_mat  <- readRDS("geno_mat.rds")
 breed_vec <- as.factor(readRDS("breed_vec.rds"))
 snp_names <- readRDS("snp_names.rds")
+# Exclude break-end (BND) SVs, consistent with the benchmark and the manuscript.
+bnd_idx <- grepl("\\[|\\]", snp_names)
+if (any(bnd_idx)) { geno_mat <- geno_mat[, !bnd_idx, drop = FALSE]; snp_names <- snp_names[!bnd_idx] }
 breeds <- sort(levels(breed_vec))
 
 CONF_METRIC <- "FST"; CONF_CLASSIFIER <- "SVM_linear"; N <- 600
@@ -38,7 +41,7 @@ p <- ggplot(conf_df, aes(x = Pred, y = True, fill = Proportion)) +
   scale_fill_gradient2(low = "white", mid = "#85B7EB", high = "#0C447C",
                        midpoint = 0.5, limits = c(0, 1), name = "Proportion") +
   labs(x = "Predicted breed", y = "True breed",
-       title = sprintf("%d markers (%s + %s)", N, CONF_METRIC, CONF_CLASSIFIER),
+       title = bquote(.(paste0(N, " markers (")) * italic(F)[ST] * " + SVM_linear)"),
        subtitle = sprintf("Accuracy: %.1f%%", acc * 100)) +
   theme_classic(base_size = 23) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 16),

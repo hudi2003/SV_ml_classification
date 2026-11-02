@@ -1,0 +1,12 @@
+Random 600-SV panels, 1000 independent draws, nested 5x5, SVM linear
+  draw-level mean accuracy  : mean 93.69%  sd 1.04%  min 89.39%  max 97.09%
+  percentiles of draw mean  : 2.5% 91.71% | 5% 92.01% | 50% 93.80% | 95% 95.31% | 97.5% 95.81%
+  fold-level accuracy       : mean 93.69%  sd 2.74%  (n=5000 fold estimates)
+
+
+Ranking methods at the same 600 markers:
+  AED   ranked 94.44% (folds 91.30-96.83) | random draws >= it: 200/1000 (20%) | gap +0.75 pp
+  Delta ranked 93.85% (folds 91.43-95.52) | random draws >= it: 437/1000 (44%) | gap +0.15 pp
+  FST   ranked 95.29% (folds 92.75-97.14) | random draws >= it: 61/1000 (6%) | gap +1.59 pp
+  PIC   ranked 95.31% (folds 92.75-97.14) | random draws >= it: 55/1000 (6%) | gap +1.61 pp
+  single random draw in main run (seed 100000+k): mean 93.51%
