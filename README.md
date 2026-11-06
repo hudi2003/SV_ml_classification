@@ -91,8 +91,8 @@ cd random_panels
 RAND_N=600 RAND_REP=1000 NESTED_CORES=48 Rscript random_panel_replicates.R
 cd ..
 python random_panels/stratified_monte_carlo.py \
-  --random random_panels/random600_detail.csv \
-  --detail nested_cv_full_detail.csv --n 600
+  --random random600_detail.csv \
+  --detail ../nested_cv_detail_ALL.csv --n 600
 
 # 5. Optional: repeated outer cross-validation (1,000 splits, 32 workers)
 cd random_panels
@@ -137,8 +137,7 @@ single-core task:
 | `make_tasks.py` | Builds `tasks.csv` (5,000 cells, most expensive first) |
 | `merge_parts.R` | Merges `parts/` into the `nested_cv_*_ALL.csv` tables |
 | `panel_selected_by_inner_cv.py` | Panel size chosen inside each training fold by the inner CV |
-| `nested_cv_summary_ALL.csv`, `nested_cv_detail_ALL.csv`, `nested_cv_params_ALL.csv` | Complete results |
-| `panel_selected_by_inner_cv.csv` | Selected panel size and held-out accuracy per classifier and statistic |
+The merged tables (`nested_cv_summary_ALL.csv`, `nested_cv_detail_ALL.csv`, `nested_cv_params_ALL.csv`) and `panel_selected_by_inner_cv.csv` are written by these scripts. They are not tracked in the repository.
 
 
 ## Random-panel control (2026-11)

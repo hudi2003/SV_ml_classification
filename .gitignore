@@ -1,2 +1,10 @@
 scratch/
 __pycache__/
+
+# data and run outputs are not tracked
+*.csv
+*.rds
+*.log
+*.png
+*.pdf
+*.gz
