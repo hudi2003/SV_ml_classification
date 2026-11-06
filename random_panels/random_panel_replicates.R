@@ -1,28 +1,3 @@
-# ---------------------------------------------------------------------------
-# Random-panel control for the ranked SV panels (reviewer Major 5)
-#
-# Repeats the nested procedure with independently drawn, unordered panels of the
-# same size:
-#   outer : 5-fold stratified CV (seed 42) on the 339 samples
-#   inner : 5-fold stratified CV inside each outer training fold, grid search
-#   model : SVM linear, cost in {0.01, 0.1, 1, 10}
-#   panel : RAND_N SVs
-#
-# Each replicate draws its own panel for the outer training fold and for every
-# inner training split, so the only difference from a ranked panel is how the
-# markers are chosen.
-#
-# Environment variables
-#   RAND_N         panel size                                  (default 400)
-#   RAND_REP       number of independent draws                 (default 1000)
-#   NESTED_CORES   workers                                     (default 32)
-#   NESTED_INNER_K inner folds                                 (default 5)
-#
-# Output, prefix random<RAND_N>:
-#   <prefix>_detail.csv   one row per draw x outer fold
-#   <prefix>_summary.txt  draw-level mean, SD and percentiles
-# Significance testing is done by stratified_monte_carlo.py.
-# ---------------------------------------------------------------------------
 suppressPackageStartupMessages({
   library(data.table); library(dplyr); library(e1071); library(foreach)
   library(doParallel)

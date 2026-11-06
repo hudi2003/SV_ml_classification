@@ -1,39 +1,3 @@
-#!/usr/bin/env python3
-"""Stratified Monte Carlo test of ranked SV panels against random panels.
-
-Why not a t-test
-----------------
-A ranked panel is evaluated once per outer fold, so it yields five accuracies.
-Those five numbers are not independent (all five folds are cut from the same
-339 individuals and share ~80% of their training data) and the accuracy is a
-discrete proportion with a ceiling at 100%. A t distribution with 4 degrees of
-freedom is therefore both too thick-tailed and based on an assumption the data
-do not meet.
-
-The test used in the paper builds the null distribution from the random panels
-themselves: one random panel is drawn from each outer fold, the five accuracies
-are averaged, and the draw is repeated B times. The resulting distribution is
-the distribution of the 5-fold mean accuracy when the panel carries no ranking
-information. The p value is the fraction of draws at least as large as the
-observed ranked panel (plus one correction).
-
-Usage
------
-    python stratified_monte_carlo.py \
-        --random random400_detail.csv \
-        --detail nested_cv_full_detail.csv \
-        --out random400_stats.csv
-
-    # several checkpoint files at once
-    python stratified_monte_carlo.py \
-        --random 'random600_part_*.csv.gz' \
-        --detail nested_cv_full_detail.csv --n 600 --B 100000 \
-        --out random600_10k_stats.csv
-
-Output columns: ranked, random, diff_pp, p_mc_one_sided, p_mc_two_sided,
-ci_lo, ci_hi, draws_ge, n_draws, pctile, plus the t-test sensitivities
-(p_one_sample_t, p_paired_t).
-"""
 import argparse
 import glob
 import sys
@@ -80,7 +44,7 @@ def stratified_mc(fold_values, observed, B, seed):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__,
+    ap = argparse.ArgumentParser(description="Stratified Monte Carlo test of ranked panels against random panels",
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--random", nargs="+", required=True,
                     help="random-panel detail CSV(s); globs allowed")

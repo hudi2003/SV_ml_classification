@@ -1,18 +1,3 @@
-# ---------------------------------------------------------------------------
-# Nested cross-validation benchmark with inner hyper-parameter search
-#
-# Outer loop : 5-fold stratified CV (seed 42) on the 339 samples.
-# Inner loop : 5-fold stratified CV *inside each outer training fold*; a grid
-#              search selects the hyper-parameters, the model is then refit on
-#              the whole outer training fold and applied once to the outer
-#              test fold.
-# Marker ranking (FST / Delta / AED / PIC) is recomputed on the outer training
-# fold, and again inside every inner training split for the tuning step, so
-# neither the outer test samples nor the inner validation samples influence
-# the ranking or the hyper-parameters.
-#
-# Set NESTED_QUICK=1 for a small smoke test, NESTED_CORES=<n> for workers.
-# ---------------------------------------------------------------------------
 library(data.table)
 library(dplyr)
 library(randomForest)

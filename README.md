@@ -57,12 +57,3 @@ R 4.3.3 with `data.table`, `dplyr`, `randomForest`, `e1071`, `MASS`, `class`, `r
 Input is `SV_geno_additive.raw` from `plink --recode A` (339 individuals x 9,384 SVs, breed code
 in FID). Genotypes are mean-imputed per site. Neither the input data nor the result tables are
 included here.
-
-## Citation
-
-> Hu D, Zhang Y, Fan Q, Hu Z, Hou S, Wang X. Population-scale structural variants as genetic
-> markers for duck breed tracing. *Poultry Science* (under revision).
-
-## License
-
-For academic use. Contact the corresponding author (Xia Wang, xiawang@nwafu.edu.cn) about reuse.

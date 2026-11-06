@@ -1,4 +1,3 @@
-# Merge parts/row_*.csv into the standard result tables.
 suppressPackageStartupMessages({ library(data.table); library(dplyr) })
 files <- list.files("parts", pattern = "^row_[0-9]+\\.csv$", full.names = TRUE)
 cat("row files:", length(files), "\n")

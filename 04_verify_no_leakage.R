@@ -1,7 +1,3 @@
-# ---------------------------------------------------------------------------
-# Leakage / sanity checks for the nested cross-validation benchmark.
-# Run BEFORE the full benchmark.  All checks must print PASS.
-# ---------------------------------------------------------------------------
 library(data.table)
 source("00_functions.R")
 

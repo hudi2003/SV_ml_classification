@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 library(data.table); library(ggplot2); library(dplyr)
 source("00_functions.R")
 

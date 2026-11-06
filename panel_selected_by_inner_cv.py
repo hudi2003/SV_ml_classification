@@ -1,16 +1,6 @@
-"""Panel size chosen by the inner cross-validation (reviewer Major 5, point 2).
-
-For every (metric, classifier) and every outer fold, the panel size is selected
-inside the training fold as the smallest n whose inner-CV accuracy reaches 95%
-(falling back to the n with the highest inner accuracy when 95% is not reached).
-The selected panel is then evaluated on the held-out outer test fold, so the
-reported accuracy is an honest estimate of the whole 'choose the panel, then
-classify' procedure.
-"""
 import pandas as pd, numpy as np, os
 
-P = r"C:/Users/hudi/rev_work/SV_ml_classification/"
-d = pd.read_csv(P + "nested_cv_detail_ALL.csv")
+d = pd.read_csv("nested_cv_detail_ALL.csv")
 d = d[(d.status == "ok") & d.inner_acc.notna()].copy()
 print("rows usable:", len(d), "classifiers:", d.classifier.nunique())
 

@@ -1,23 +1,3 @@
-# ---------------------------------------------------------------------------
-# Repeated outer cross-validation: is the ranking gain stable across splits?
-#
-# The main analysis uses one fixed 5-fold split (seed 42), so every panel has
-# only five outer-fold accuracies. Here the whole procedure is repeated on
-# N_SPLIT independently drawn, breed-stratified 5-fold splits. For each split we
-# evaluate the four ranked panels and N_RAND random panels at each size, using
-# exactly the same inner tuning, so the paired difference
-#     d_b = acc(ranked, split b) - acc(random, split b)
-# is available for 1,000 independent splits instead of five folds.
-#
-# Environment
-#   REP_SPLITS  number of outer splits                 (default 1000)
-#   REP_RAND    random panels per split                (default 5)
-#   REP_SIZES   panel sizes, comma separated           (default 400,600)
-#   NESTED_CORES workers                               (default 48)
-#   NESTED_INNER_K inner folds                         (default 5)
-#
-# Output: repeated_outer_cv_detail.csv and a printed summary.
-# ---------------------------------------------------------------------------
 suppressPackageStartupMessages({
   library(data.table); library(foreach); library(doParallel); library(e1071)
 })

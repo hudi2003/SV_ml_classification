@@ -1,5 +1,3 @@
-# Run ONE (fold, metric, panel size, classifier) cell of the nested benchmark.
-# Intended for a 1-core job array element: Rscript 02_single.R <task_index>
 suppressPackageStartupMessages({
   library(data.table); library(dplyr); library(randomForest); library(e1071)
   library(MASS); library(class); library(rpart); library(xgboost); library(nnet)
