@@ -30,6 +30,8 @@ This repository contains the R code used to evaluate structural variants (SVs) a
 | `06b_random600_compare.R` | Statistics and figure for the random-panel control |
 | `07_figureS5_random600.py` | Figure S5 (matplotlib): distribution of the random panels vs. the ranked panels |
 | `run_random600.sh` | SLURM-free launcher for the random-panel control (48 workers) |
+| `random_panels/random_panel_replicates.R` | Random-panel control for any panel size and draw count (`RAND_N`, `RAND_REP`) |
+| `random_panels/stratified_monte_carlo.py` | Stratified Monte Carlo test, effect size, 95% CI and t-test sensitivities |
 
 ---
 
@@ -65,7 +67,9 @@ Four statistics are computed for every SV and used to rank the markers:
 
 ### Random-panel control
 
-The control for the ranking step uses exactly the same nested design: the panel of 600 SVs is re-drawn at random inside every outer training fold and again inside every inner training split, and the whole procedure is repeated for every draw (1,000 draws by default, fixed seeds). Accuracy across draws is summarised as mean +/- SD and compared with the four ranked panels of the same size; paired comparisons use the five shared outer folds.
+The control for the ranking step uses exactly the same nested design: a panel of N SVs (400 or 600) is re-drawn at random inside every outer training fold and again inside every inner training split, and the whole procedure is repeated for every draw (1,000 draws, and 10,000 for the 600-SV panel). Accuracy across draws is summarised as mean +/- SD and compared with the four ranked panels of the same size.
+
+Significance is assessed with a stratified Monte Carlo test rather than a t-test. The ranked panel yields only five outer-fold accuracies, which are not independent (the folds share about 80% of their training data) and are discrete proportions bounded at 100%; a t distribution with four degrees of freedom is therefore both thick-tailed and built on an assumption the data do not meet. Instead, one random panel is drawn from each fold, the five accuracies are averaged, and the draw is repeated 100,000 times; this is the distribution of the five-fold mean when the panel carries no ranking information. The p value is the fraction of these draws at least as large as the observed panel. The one-sample and paired t-tests are reported alongside as sensitivity analyses.
 
 ### Classifiers
 
@@ -88,6 +92,14 @@ Rscript 03_visualization.R
 # 4. Random-panel control (1,000 draws; 48 workers, ~20 min)
 RAND_REP=1000 NESTED_CORES=48 Rscript 06_random600_replicates.R
 Rscript 06b_random600_compare.R
+
+# 5. Same control for any panel size, plus the Monte Carlo test
+cd random_panels
+RAND_N=600 RAND_REP=1000 NESTED_CORES=48 Rscript random_panel_replicates.R
+cd ..
+python random_panels/stratified_monte_carlo.py \
+  --random random_panels/random600_detail.csv \
+  --detail nested_cv_full_detail.csv --n 600
 ```
 
 Tested with R 4.3.3. Required packages: `data.table`, `dplyr`, `randomForest`, `e1071`, `MASS`, `class`, `rpart`, `xgboost`, `nnet`, `glmnet`, `foreach`, `doParallel`.
@@ -130,3 +142,21 @@ single-core task:
 | `panel_selected_by_inner_cv.py` | Panel size chosen inside each training fold by the inner CV |
 | `nested_cv_summary_ALL.csv`, `nested_cv_detail_ALL.csv`, `nested_cv_params_ALL.csv` | Complete results |
 | `panel_selected_by_inner_cv.csv` | Selected panel size and held-out accuracy per classifier and statistic |
+
+
+## Random-panel control (2026-11)
+
+600-SV panel, 10,000 draws, nested 5x5, linear SVM. Random panels reached 93.75 +/- 1.03%
+(2.5-97.5%: 91.74-95.66%; 1,114 of 10,000 draws reached 95%). One-sided stratified Monte Carlo
+P values (100,000 resamples): FST 0.065, PIC 0.056, AED 0.232, Delta 0.455; gains of +1.53,
++1.55, +0.69 and +0.09 percentage points over the random mean.
+
+At 400 markers (1,000 draws) the random mean is 91.48 +/- 1.19% and the gain is larger:
+FST 93.81% (+2.34 pp, P = 0.024, positive in all five folds) and Delta 93.56% (+2.08 pp,
+P = 0.037); AED and PIC are not significant. Ranking therefore matters more when the panel is
+small, and the gain is modest in absolute terms.
+
+The scripts in `random_panels/` accept any panel size through `RAND_N`, so the 400- and
+600-SV controls are the same code with a different environment variable. The 10,000-draw run
+used the same seeds as the 1,000-draw run for draws 1-1,000, which reproduces the earlier numbers
+exactly.
