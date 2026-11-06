@@ -1,7 +1,6 @@
 # SV_ml_classification
 
-Code accompanying *Population-scale structural variants as genetic markers for duck breed tracing*
-(PSJ-D-26-02294). It assigns 339 ducks from 22 populations to breeds from structural-variant
+Code accompanying *Population-scale structural variants as genetic markers for duck breed tracing*. It assigns 339 ducks from 22 populations to breeds from structural-variant
 genotypes, comparing four ranking statistics (FST, Delta, AED, PIC) across ten classifiers and 20
 panel sizes under nested cross-validation. Marker ranking and hyper-parameter tuning are done
 inside every training fold, the ranked panels are compared with randomly drawn panels of the same
