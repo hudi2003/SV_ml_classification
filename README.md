@@ -26,12 +26,9 @@ This repository contains the R code used to evaluate structural variants (SVs) a
 | `05_summarize_results.py` | Extracts the numbers cited in the manuscript from the benchmark tables |
 | `export_marker_ranking.R` | Exports per-SV values of the four ranking statistics |
 | `fst_confusion_only.R` | Confusion matrix for the FST-ranked panel |
-| `06_random600_replicates.R` | Random-panel control: repeats the nested procedure with independently drawn panels (default 1,000 draws of 600 SVs) |
-| `06b_random600_compare.R` | Statistics and figure for the random-panel control |
-| `07_figureS5_random600.py` | Figure S5 (matplotlib): distribution of the random panels vs. the ranked panels |
-| `run_random600.sh` | SLURM-free launcher for the random-panel control (48 workers) |
 | `random_panels/random_panel_replicates.R` | Random-panel control for any panel size and draw count (`RAND_N`, `RAND_REP`) |
 | `random_panels/stratified_monte_carlo.py` | Stratified Monte Carlo test, effect size, 95% CI and t-test sensitivities |
+| `random_panels/repeated_outer_cv.R` | Repeats the whole nested procedure on many independently drawn 5-fold splits |
 
 ---
 
@@ -89,17 +86,17 @@ Rscript 02_rigorous_nested_benchmark.R
 # 3. Produce the figures
 Rscript 03_visualization.R
 
-# 4. Random-panel control (1,000 draws; 48 workers, ~20 min)
-RAND_REP=1000 NESTED_CORES=48 Rscript 06_random600_replicates.R
-Rscript 06b_random600_compare.R
-
-# 5. Same control for any panel size, plus the Monte Carlo test
+# 4. Random-panel control and its significance test
 cd random_panels
 RAND_N=600 RAND_REP=1000 NESTED_CORES=48 Rscript random_panel_replicates.R
 cd ..
 python random_panels/stratified_monte_carlo.py \
   --random random_panels/random600_detail.csv \
   --detail nested_cv_full_detail.csv --n 600
+
+# 5. Optional: repeated outer cross-validation (1,000 splits, 32 workers)
+cd random_panels
+REP_SPLITS=1000 REP_RAND=2 NESTED_CORES=32 Rscript repeated_outer_cv.R
 ```
 
 Tested with R 4.3.3. Required packages: `data.table`, `dplyr`, `randomForest`, `e1071`, `MASS`, `class`, `rpart`, `xgboost`, `nnet`, `glmnet`, `foreach`, `doParallel`.
