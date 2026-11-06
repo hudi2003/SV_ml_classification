@@ -24,8 +24,6 @@ This repository contains the R code used to evaluate structural variants (SVs) a
 | `03_visualization.R` | Accuracy curves, confusion matrices, economical-panel table and best-classifier heatmap |
 | `04_verify_no_leakage.R` | Leakage checks: split disjointness, invariance of the inner search to the test fold, permuted-label negative control |
 | `05_summarize_results.py` | Extracts the numbers cited in the manuscript from the benchmark tables |
-| `export_marker_ranking.R` | Exports per-SV values of the four ranking statistics |
-| `fst_confusion_only.R` | Confusion matrix for the FST-ranked panel |
 | `random_panels/random_panel_replicates.R` | Random-panel control for any panel size and draw count (`RAND_N`, `RAND_REP`) |
 | `random_panels/stratified_monte_carlo.py` | Stratified Monte Carlo test, effect size, 95% CI and t-test sensitivities |
 | `random_panels/repeated_outer_cv.R` | Repeats the whole nested procedure on many independently drawn 5-fold splits |
